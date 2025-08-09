@@ -339,10 +339,10 @@
             <label for="comments">Comments</label>
             <textarea id="comments" rows="2"></textarea>
         </div>
-        <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
-        <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
-        <button type="button" class="btn btn-danger" onclick="startNew()" style="margin-left:8px;">Start New</button>
+        <button type="button" class="btn btn-secondary" id="exportBtn" onclick="exportCSV()">Export CSV</button>
+        <button type="button" class="btn btn-secondary" id="importBtn" onclick="document.getElementById('csvInput').click()">Import CSV</button>
+        <button type="button" class="btn btn-danger" id="undoBtn" onclick="undoLast()">Undo</button>
+        <button type="button" class="btn btn-danger" id="startNewBtn" onclick="startNew()" style="margin-left:8px;">Start New</button>
         <!-- Hidden file input for CSV import -->
         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)" />
     </form>
@@ -411,6 +411,40 @@
             }
         }
 
+        /**
+         * Enable or disable all evaluation form fields based on whether the
+         * required master controls (scout name and default age group) are set.
+         * When the scout name and age group are empty, this prevents data
+         * entry in the evaluation form until these essentials are provided.
+         */
+        function updateFormAvailability() {
+            const masterName = document.getElementById('masterScout').value.trim();
+            const masterAge = document.getElementById('masterAgeGroup').value;
+            const enabled = masterName !== '' && masterAge !== '';
+            // List of element IDs to toggle
+            const fieldIds = [
+                'playerName','playerNumber','gender','playerPhoto','toggleDash',
+                'pos1','pos2','comments','allStar','exportBtn','importBtn','undoBtn','startNewBtn'
+            ];
+            fieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = !enabled;
+                }
+            });
+            // Star rating containers: disable pointer events when form is disabled
+            ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
+                const container = document.getElementById(prefix + 'Rating');
+                if (container) {
+                    container.style.pointerEvents = enabled ? 'auto' : 'none';
+                    container.style.opacity = enabled ? '1' : '0.5';
+                }
+            });
+            // Also disable import file input (csvInput)
+            const csvInput = document.getElementById('csvInput');
+            if (csvInput) csvInput.disabled = !enabled;
+        }
+
         const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
 
         // Current sort criterion: default to 'number' so rows start sorted by player number
@@ -441,6 +475,8 @@
             masterAge.addEventListener('change', () => {
                 document.getElementById('ageGroup').value = masterAge.value;
                 updateGenderVisibility();
+                // Ensure form availability is updated when the default age group changes
+                updateFormAvailability();
             });
             document.getElementById('ageGroup').value = masterAge.value;
 
@@ -449,6 +485,13 @@
             ageSelect.addEventListener('change', updateGenderVisibility);
             // Initial call to set gender visibility on load
             updateGenderVisibility();
+
+            // Attach listeners to master controls to update form availability
+            document.getElementById('masterScout').addEventListener('input', updateFormAvailability);
+            document.getElementById('masterAgeGroup').addEventListener('change', updateFormAvailability);
+
+            // Initial call to enable/disable form based on master control values
+            updateFormAvailability();
 
             // Initialize star rating widgets
             ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
