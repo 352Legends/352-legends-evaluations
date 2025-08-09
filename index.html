@@ -174,7 +174,7 @@
                 <!-- Player numbers added via script -->
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="genderGroup">
             <label for="gender">Gender</label>
             <select id="gender">
                 <option value="" disabled selected>Select gender</option>
@@ -346,14 +346,50 @@
             const masterAge = document.getElementById('masterAgeGroup');
             masterAge.addEventListener('change', () => {
                 document.getElementById('ageGroup').value = masterAge.value;
+                updateGenderVisibility();
             });
             document.getElementById('ageGroup').value = masterAge.value;
+
+            // Attach change handler to show/hide gender field based on selected age group
+            const ageSelect = document.getElementById('ageGroup');
+            ageSelect.addEventListener('change', updateGenderVisibility);
+            // Initial call to set gender visibility on load
+            updateGenderVisibility();
+
+            // Automatically enter edit mode when a selected player number already exists
+            numSelect.addEventListener('change', () => {
+                const selectedNum = numSelect.value;
+                if (!selectedNum) {
+                    editingIndex = null;
+                    return;
+                }
+                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === selectedNum);
+                if (existingIndex >= 0) {
+                    editEvaluation(existingIndex);
+                } else {
+                    editingIndex = null;
+                }
+            });
 
             // Register service worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('service-worker.js').catch((err) => console.error('SW registration failed', err));
             }
         });
+
+        // Show or hide the gender field depending on the selected age group. For Coed Highschool,
+        // gender is visible; for other age groups it is hidden and cleared.
+        function updateGenderVisibility() {
+            const age = document.getElementById('ageGroup').value;
+            const genderGroup = document.getElementById('genderGroup');
+            if (!genderGroup) return;
+            if (age === 'Coed Highschool') {
+                genderGroup.style.display = '';
+            } else {
+                genderGroup.style.display = 'none';
+                document.getElementById('gender').value = '';
+            }
+        }
 
         function addEvaluation() {
             const name = document.getElementById('playerName').value.trim();
@@ -497,6 +533,8 @@
             document.getElementById('allStar').checked = !!e.allStar;
             document.getElementById('comments').value = e.comments;
             editingIndex = index;
+            // Update gender field visibility when editing an existing player
+            updateGenderVisibility();
         }
 
         function deleteEvaluation(index) {
@@ -567,6 +605,8 @@
             }
             const masterAge = document.getElementById('masterAgeGroup').value;
             document.getElementById('ageGroup').value = masterAge;
+            // update gender visibility after resetting age group
+            updateGenderVisibility();
         }
 
         function computeNumericAverage(ev) {
