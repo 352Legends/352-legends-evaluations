@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>352 Legends Player Evaluations</title>
+    <!-- Link to PWA manifest -->
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* Mobile-friendly styling similar to desktop but with tighter spacing */
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 10px;
+        }
+        h1 {
+            text-align: center;
+            color: #00338d;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        form {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e3e6eb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            max-width: 100%;
+            margin: 10px auto;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+        .ratings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background-color: #005bb5; }
+        .btn-primary:hover { background-color: #00408a; }
+        .btn-secondary { background-color: #007bff; }
+        .btn-secondary:hover { background-color: #0062cc; }
+        .btn-danger { background-color: #c21807; }
+        .btn-danger:hover { background-color: #9a1305; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #ffffff;
+            border-radius: 6px;
+            overflow-x: auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            font-size: 0.8rem;
+        }
+        th {
+            background-color: #00338d;
+            color: #ffffff;
+            font-weight: 500;
+            padding: 6px;
+        }
+        tbody tr:nth-child(even) { background-color: #f4f8fc; }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        /* Group header style */
+        .group-header {
+            background-color: #fdf2f2;
+            color: #9a1305;
+            font-weight: bold;
+            text-align: left;
+        }
+        /* Highlight master controls */
+        #masterAgeGroup, #masterScout {
+            background-color: #fff1f0;
+            border-color: #c21807;
+        }
+    </style>
+</head>
+<body>
+    <h1>352 Legends Player Evaluations</h1>
+    <!-- Master controls -->
+    <div style="max-width: 100%; margin: 0 auto 10px auto; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div class="form-group">
+            <label for="masterScout"><strong>Scout Name</strong></label>
+            <input type="text" id="masterScout" placeholder="Enter scout name" />
+        </div>
+        <div class="form-group">
+            <label for="masterAgeGroup"><strong>Default Age Group</strong></label>
+            <select id="masterAgeGroup">
+                <option value="">Select age group</option>
+                <option value="5U">5U</option>
+                <option value="7U">7U</option>
+                <option value="9U">9U</option>
+                <option value="11U">11U</option>
+                <option value="13U">13U</option>
+                <option value="Girls 6-8">Girls 6-8</option>
+                <option value="Girls 9-11">Girls 9-11</option>
+                <option value="Girls 12-14">Girls 12-14</option>
+                <option value="Coed Highschool">Coed Highschool</option>
+            </select>
+        </div>
+    </div>
+
+    <form id="evaluationForm">
+        <!-- Player basic information -->
+        <div class="form-group">
+            <label for="playerName">Player Name</label>
+            <input type="text" id="playerName" placeholder="Enter player name" />
+        </div>
+        <div class="form-group">
+            <label for="playerNumber">Player Number</label>
+            <select id="playerNumber">
+                <option value="" disabled selected>Select number</option>
+                <!-- Player numbers added via script -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender">
+                <option value="" disabled selected>Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non‑binary/Other">Non‑binary/Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="ageGroup">Age Group <span style="color:#c21807;">*</span></label>
+            <select id="ageGroup" required>
+                <option value="" disabled selected>Select age group</option>
+                <option value="5U">5U</option>
+                <option value="7U">7U</option>
+                <option value="9U">9U</option>
+                <option value="11U">11U</option>
+                <option value="13U">13U</option>
+                <option value="Girls 6-8">Girls 6-8</option>
+                <option value="Girls 9-11">Girls 9-11</option>
+                <option value="Girls 12-14">Girls 12-14</option>
+                <option value="Coed Highschool">Coed Highschool</option>
+            </select>
+        </div>
+        <div class="ratings">
+            <div class="form-group">
+                <label for="running">Running / Agility (1–5)</label>
+                <select id="running">
+                    <option value="" disabled selected>--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="flagPulling">Flag Pulling (1–5)</label>
+                <select id="flagPulling">
+                    <option value="" disabled selected>--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="catching">Catching / Route Running (1–5)</label>
+                <select id="catching">
+                    <option value="" disabled selected>--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="defense">Defensive Skills (1–5)</label>
+                <select id="defense">
+                    <option value="" disabled selected>--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="throwing">Throwing (1–5, ages 7+)</label>
+                <select id="throwing">
+                    <option value="" disabled selected>--</option>
+                    <option value="N/A">N/A</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="attitude">Attitude / Coachability (1–5)</label>
+                <select id="attitude">
+                    <option value="" disabled selected>--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
+        <!-- Key positions -->
+        <div class="form-group">
+            <label for="pos1">Key Position 1</label>
+            <select id="pos1">
+                <option value="" disabled selected>Select position</option>
+                <option value="QB">QB</option>
+                <option value="WR">WR</option>
+                <option value="RB">RB</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="pos2">Key Position 2</label>
+            <select id="pos2">
+                <option value="" disabled selected>Select position</option>
+                <option value="QB">QB</option>
+                <option value="WR">WR</option>
+                <option value="RB">RB</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="comments">Comments</label>
+            <textarea id="comments" rows="2"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="addEvaluation()">Save Evaluation</button>
+        <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
+    </form>
+
+    <table id="evaluationTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>Edit</th><th>Delete</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+        const evaluations = [];
+        let editingIndex = null;
+        const history = [];
+        let lastPlayerNumber = '';
+
+        const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
+
+        // Populate player numbers on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const numSelect = document.getElementById('playerNumber');
+            for (let i = 1; i <= 99; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                numSelect.appendChild(opt);
+            }
+            // Set default age group from master
+            const masterAge = document.getElementById('masterAgeGroup');
+            masterAge.addEventListener('change', () => {
+                document.getElementById('ageGroup').value = masterAge.value;
+            });
+            document.getElementById('ageGroup').value = masterAge.value;
+
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js').catch((err) => console.error('SW registration failed', err));
+            }
+        });
+
+        function addEvaluation() {
+            const name = document.getElementById('playerName').value.trim();
+            const playerNumber = document.getElementById('playerNumber').value;
+            const gender = document.getElementById('gender').value;
+            const ageGroup = document.getElementById('ageGroup').value;
+            const running = document.getElementById('running').value;
+            const flagPulling = document.getElementById('flagPulling').value;
+            const catching = document.getElementById('catching').value;
+            const defense = document.getElementById('defense').value;
+            const throwSel = document.getElementById('throwing').value;
+            const throwing = throwSel && throwSel !== 'N/A' ? throwSel : 'N/A';
+            const attitude = document.getElementById('attitude').value;
+            const pos1 = document.getElementById('pos1').value;
+            const pos2 = document.getElementById('pos2').value;
+            const comments = document.getElementById('comments').value.trim();
+            const masterScout = document.getElementById('masterScout').value.trim();
+            if (!ageGroup) {
+                alert('Please select an age group.');
+                return;
+            }
+            if (!masterScout) {
+                alert('Please enter the scout\'s name in the master field.');
+                return;
+            }
+            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, comments, pos1, pos2, scoutName: masterScout };
+            if (editingIndex !== null) {
+                history.push({ action: 'update', index: editingIndex, previous: { ...evaluations[editingIndex] } });
+                evaluations[editingIndex] = newEval;
+                editingIndex = null;
+            } else {
+                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === playerNumber && playerNumber !== '');
+                if (existingIndex >= 0) {
+                    const oldEval = evaluations[existingIndex];
+                    const combined = combineEvaluations(oldEval, newEval);
+                    history.push({ action: 'update', index: existingIndex, previous: { ...oldEval } });
+                    evaluations[existingIndex] = combined;
+                } else {
+                    evaluations.push(newEval);
+                    history.push({ action: 'add', index: evaluations.length - 1 });
+                }
+            }
+            lastPlayerNumber = playerNumber;
+            renderTable();
+            clearForm();
+        }
+
+        function renderTable() {
+            const table = document.getElementById('evaluationTable');
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const sorted = evaluations.map((ev, idx) => ({ ev, origIndex: idx })).sort((a, b) => {
+                const ai = ageOrder.indexOf(a.ev.ageGroup);
+                const bi = ageOrder.indexOf(b.ev.ageGroup);
+                const aiPos = ai >= 0 ? ai : ageOrder.length;
+                const biPos = bi >= 0 ? bi : ageOrder.length;
+                return aiPos - biPos || a.origIndex - b.origIndex;
+            });
+            let currentGroup = null;
+            let displayIndex = 1;
+            sorted.forEach(({ ev, origIndex }) => {
+                if (ev.ageGroup !== currentGroup) {
+                    currentGroup = ev.ageGroup || '';
+                    const groupRow = document.createElement('tr');
+                    const groupCell = document.createElement('td');
+                    groupCell.colSpan = 17;
+                    groupCell.className = 'group-header';
+                    groupCell.textContent = currentGroup ? `Age Group: ${currentGroup}` : 'Age Group: (unspecified)';
+                    groupRow.appendChild(groupCell);
+                    tbody.appendChild(groupRow);
+                }
+                const row = document.createElement('tr');
+                const starRating = computeStarRating(ev);
+                row.innerHTML = `
+                    <td>${displayIndex}</td>
+                    <td>${ev.name || ''}</td>
+                    <td>${ev.playerNumber || ''}</td>
+                    <td>${ev.gender || ''}</td>
+                    <td>${ev.ageGroup || ''}</td>
+                    <td>${ev.running || ''}</td>
+                    <td>${ev.flagPulling || ''}</td>
+                    <td>${ev.catching || ''}</td>
+                    <td>${ev.defense || ''}</td>
+                    <td>${ev.throwing || ''}</td>
+                    <td>${ev.attitude || ''}</td>
+                    <td>${ev.comments || ''}</td>
+                    <td>${ev.pos1 || ''}</td>
+                    <td>${ev.pos2 || ''}</td>
+                    <td>${starRating}</td>
+                    <td><button type="button" class="btn btn-secondary" onclick="editEvaluation(${origIndex})">Edit</button></td>
+                    <td><button type="button" class="btn btn-danger" onclick="deleteEvaluation(${origIndex})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+                displayIndex++;
+            });
+            table.style.display = evaluations.length > 0 ? 'table' : 'none';
+        }
+
+        function editEvaluation(index) {
+            const e = evaluations[index];
+            document.getElementById('playerName').value = e.name;
+            document.getElementById('playerNumber').value = e.playerNumber;
+            document.getElementById('gender').value = e.gender;
+            document.getElementById('ageGroup').value = e.ageGroup;
+            document.getElementById('running').value = e.running;
+            document.getElementById('flagPulling').value = e.flagPulling;
+            document.getElementById('catching').value = e.catching;
+            document.getElementById('defense').value = e.defense;
+            document.getElementById('throwing').value = e.throwing !== 'N/A' ? e.throwing : '';
+            document.getElementById('attitude').value = e.attitude;
+            document.getElementById('pos1').value = e.pos1 || '';
+            document.getElementById('pos2').value = e.pos2 || '';
+            document.getElementById('comments').value = e.comments;
+            editingIndex = index;
+        }
+
+        function deleteEvaluation(index) {
+            if (index >= 0 && index < evaluations.length) {
+                const removed = evaluations[index];
+                history.push({ action: 'delete', index: index, item: removed });
+                evaluations.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        function undoLast() {
+            if (history.length === 0) {
+                alert('Nothing to undo.');
+                return;
+            }
+            const lastAction = history.pop();
+            if (lastAction.action === 'add') {
+                evaluations.splice(lastAction.index, 1);
+            } else if (lastAction.action === 'update') {
+                evaluations[lastAction.index] = lastAction.previous;
+            } else if (lastAction.action === 'delete') {
+                evaluations.splice(lastAction.index, 0, lastAction.item);
+            }
+            renderTable();
+        }
+
+        function combineEvaluations(oldEval, newEval) {
+            const combined = { ...oldEval };
+            function updateField(field, defaultVal = '') {
+                const newVal = newEval[field];
+                if (newVal && newVal !== defaultVal) {
+                    combined[field] = newVal;
+                }
+            }
+            updateField('name');
+            updateField('gender');
+            updateField('ageGroup');
+            updateField('running');
+            updateField('flagPulling');
+            updateField('catching');
+            updateField('defense');
+            if (newEval.throwing && newEval.throwing !== 'N/A') {
+                combined.throwing = newEval.throwing;
+            }
+            updateField('attitude');
+            updateField('pos1');
+            updateField('pos2');
+            updateField('scoutName');
+            if (newEval.comments) {
+                if (combined.comments) {
+                    combined.comments = combined.comments + '\n' + newEval.comments;
+                } else {
+                    combined.comments = newEval.comments;
+                }
+            }
+            return combined;
+        }
+
+        function clearForm() {
+            document.getElementById('evaluationForm').reset();
+            if (lastPlayerNumber) {
+                document.getElementById('playerNumber').value = lastPlayerNumber;
+            }
+            const masterAge = document.getElementById('masterAgeGroup').value;
+            document.getElementById('ageGroup').value = masterAge;
+        }
+
+        function computeNumericAverage(ev) {
+            const values = [];
+            ['running','flagPulling','catching','defense','attitude'].forEach(f => {
+                const v = ev[f];
+                if (v && v !== '') {
+                    const num = parseFloat(v);
+                    if (!isNaN(num)) values.push(num);
+                }
+            });
+            if (ev.throwing && ev.throwing !== '' && ev.throwing !== 'N/A') {
+                const num = parseFloat(ev.throwing);
+                if (!isNaN(num)) values.push(num);
+            }
+            if (values.length === 0) return 0;
+            const sum = values.reduce((a,b) => a + b, 0);
+            return sum / values.length;
+        }
+
+        function computeStarRating(ev) {
+            const avg = computeNumericAverage(ev);
+            const stars = Math.round(avg);
+            if (!stars) return '';
+            return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+        }
+
+        function exportCSV() {
+            if (evaluations.length === 0) {
+                alert('No evaluations to export.');
+                return;
+            }
+            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Comments','Pos1','Pos2','Rating','Scout Name'];
+            const sorted = evaluations.map((ev, idx) => ({ ev, idx })).sort((a, b) => {
+                const ai = ageOrder.indexOf(a.ev.ageGroup);
+                const bi = ageOrder.indexOf(b.ev.ageGroup);
+                const aiPos = ai >= 0 ? ai : ageOrder.length;
+                const biPos = bi >= 0 ? bi : ageOrder.length;
+                return aiPos - biPos || a.idx - b.idx;
+            });
+            const rows = sorted.map((item, idx) => [
+                idx + 1,
+                item.ev.name,
+                item.ev.playerNumber,
+                item.ev.gender,
+                item.ev.ageGroup,
+                item.ev.running,
+                item.ev.flagPulling,
+                item.ev.catching,
+                item.ev.defense,
+                item.ev.throwing,
+                item.ev.attitude,
+                item.ev.comments,
+                item.ev.pos1,
+                item.ev.pos2,
+                computeStarRating(item.ev),
+                item.ev.scoutName
+            ]);
+            const csvContent = [header.join(','), ...rows.map(r => r.map(val => `"${val}"`).join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'player_evaluations.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
