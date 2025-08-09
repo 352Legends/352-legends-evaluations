@@ -298,6 +298,15 @@
             <label for="comments">Comments</label>
             <textarea id="comments" rows="2"></textarea>
         </div>
+        <!-- 40 Yard Dash timer -->
+        <div class="form-group" id="dashGroup">
+            <label for="dashTime">40 Yard Dash (sec)</label>
+            <div style="display:flex; align-items:center; gap: 8px;">
+                <input type="text" id="dashTime" placeholder="--" readonly style="flex:1;">
+                <button type="button" class="btn btn-secondary" id="startDash" onclick="startDashTimer()">Start</button>
+                <button type="button" class="btn btn-secondary" id="stopDash" onclick="stopDashTimer()" disabled>Stop</button>
+            </div>
+        </div>
         <button type="button" class="btn btn-primary" onclick="addEvaluation()">Save Evaluation</button>
         <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
@@ -319,7 +328,7 @@
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
-                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
+                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Dash (sec)</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -409,6 +418,7 @@
             const pos1 = document.getElementById('pos1').value;
             const pos2 = document.getElementById('pos2').value;
             const comments = document.getElementById('comments').value.trim();
+            const dashTime = document.getElementById('dashTime').value.trim();
             const allStar = document.getElementById('allStar').checked;
             const masterScout = document.getElementById('masterScout').value.trim();
             if (!ageGroup) {
@@ -419,7 +429,7 @@
                 alert('Please enter the scout\'s name in the master field.');
                 return;
             }
-            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, comments, pos1, pos2, allStar, scoutName: masterScout };
+            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTime, comments, pos1, pos2, allStar, scoutName: masterScout };
             if (editingIndex !== null) {
                 history.push({ action: 'update', index: editingIndex, previous: { ...evaluations[editingIndex] } });
                 evaluations[editingIndex] = newEval;
@@ -473,7 +483,7 @@
                     const groupRow = document.createElement('tr');
                     const groupCell = document.createElement('td');
                     // Update colspan to reflect total number of columns (including All-Star)
-                    groupCell.colSpan = 18;
+                    groupCell.colSpan = 19;
                     groupCell.className = 'group-header';
                     groupCell.textContent = currentGroup ? `Age Group: ${currentGroup}` : 'Age Group: (unspecified)';
                     groupRow.appendChild(groupCell);
@@ -493,6 +503,7 @@
                     <td>${ev.defense || ''}</td>
                     <td>${ev.throwing || ''}</td>
                     <td>${ev.attitude || ''}</td>
+                    <td>${ev.dashTime || ''}</td>
                     <td>${ev.comments || ''}</td>
                     <td>${ev.pos1 || ''}</td>
                     <td>${ev.pos2 || ''}</td>
@@ -535,6 +546,10 @@
             document.getElementById('pos2').value = e.pos2 || '';
             document.getElementById('allStar').checked = !!e.allStar;
             document.getElementById('comments').value = e.comments;
+            // Set dash time value when editing
+            document.getElementById('dashTime').value = e.dashTime || '';
+            // Reset timer buttons when editing
+            stopDashTimer();
             editingIndex = index;
             // Update gender field visibility when editing an existing player
             updateGenderVisibility();
@@ -565,6 +580,32 @@
             renderTable();
         }
 
+        // Timer variables and functions for 40-yard dash
+        let dashTimerInterval = null;
+        let dashStartTime = null;
+
+        // Start the 40-yard dash timer
+        function startDashTimer() {
+            dashStartTime = Date.now();
+            // update display every 50ms for smoothness
+            dashTimerInterval = setInterval(() => {
+                const elapsed = (Date.now() - dashStartTime) / 1000;
+                document.getElementById('dashTime').value = elapsed.toFixed(2);
+            }, 50);
+            document.getElementById('startDash').disabled = true;
+            document.getElementById('stopDash').disabled = false;
+        }
+
+        // Stop the 40-yard dash timer
+        function stopDashTimer() {
+            if (dashTimerInterval !== null) {
+                clearInterval(dashTimerInterval);
+                dashTimerInterval = null;
+            }
+            document.getElementById('startDash').disabled = false;
+            document.getElementById('stopDash').disabled = true;
+        }
+
         function combineEvaluations(oldEval, newEval) {
             const combined = { ...oldEval };
             function updateField(field, defaultVal = '') {
@@ -584,6 +625,7 @@
                 combined.throwing = newEval.throwing;
             }
             updateField('attitude');
+            updateField('dashTime');
             updateField('pos1');
             updateField('pos2');
             updateField('scoutName');
@@ -610,6 +652,9 @@
             document.getElementById('ageGroup').value = masterAge;
             // update gender visibility after resetting age group
             updateGenderVisibility();
+            // reset dash time and timer buttons
+            document.getElementById('dashTime').value = '';
+            stopDashTimer();
         }
 
         function computeNumericAverage(ev) {
@@ -642,7 +687,7 @@
                 alert('No evaluations to export.');
                 return;
             }
-            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Comments','Pos1','Pos2','Rating','All-Star','Scout Name'];
+            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Dash Time','Comments','Pos1','Pos2','Rating','All-Star','Scout Name'];
             const sorted = evaluations.map((ev, idx) => ({ ev, idx })).sort((a, b) => {
                 const ai = ageOrder.indexOf(a.ev.ageGroup);
                 const bi = ageOrder.indexOf(b.ev.ageGroup);
@@ -662,6 +707,7 @@
                 item.ev.defense,
                 item.ev.throwing,
                 item.ev.attitude,
+                item.ev.dashTime || '',
                 item.ev.comments,
                 item.ev.pos1,
                 item.ev.pos2,
@@ -712,8 +758,8 @@
                 const values = parseCSVLine(line);
                 // remove surrounding quotes
                 const row = values.map(v => v.replace(/^"(.*)"$/, '$1'));
-                // Ensure there are enough columns
-                if (row.length < 17) continue;
+                // Ensure there are enough columns (including dash time and scout name)
+                if (row.length < 18) continue;
                 const evalObj = {
                     name: row[1] || '',
                     playerNumber: row[2] || '',
@@ -725,12 +771,13 @@
                     defense: row[8] || '',
                     throwing: row[9] || '',
                     attitude: row[10] || '',
-                    comments: row[11] || '',
-                    pos1: row[12] || '',
-                    pos2: row[13] || '',
-                    // rating column (14) is ignored; we recompute it dynamically
-                    allStar: (row[15] && (row[15].toLowerCase() === 'yes' || row[15].includes('★'))) ? true : false,
-                    scoutName: row[16] || ''
+                    dashTime: row[11] || '',
+                    comments: row[12] || '',
+                    pos1: row[13] || '',
+                    pos2: row[14] || '',
+                    // rating column (15) is ignored; we recompute it dynamically
+                    allStar: (row[16] && (row[16].toLowerCase() === 'yes' || row[16].includes('★'))) ? true : false,
+                    scoutName: row[17] || ''
                 };
                 if (evalObj.playerNumber) {
                     const existingIndex = evaluations.findIndex(ev => ev.playerNumber === evalObj.playerNumber);
