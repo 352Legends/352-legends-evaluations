@@ -300,7 +300,10 @@
         </div>
         <button type="button" class="btn btn-primary" onclick="addEvaluation()">Save Evaluation</button>
         <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
         <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
+        <!-- Hidden file input for CSV import -->
+        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)" />
     </form>
 
     <!-- Sort controls (hidden until there is data) -->
@@ -675,6 +678,101 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        // Handle file selection for CSV import. Reads the selected file and passes
+        // its contents to the CSV parser. Resets the file input afterwards to
+        // allow repeated imports.
+        function handleCSVImport(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                importFromCSV(text);
+            };
+            reader.readAsText(file);
+            // reset the input to allow selecting the same file again if needed
+            event.target.value = '';
+        }
+
+        // Parse CSV text and add evaluations to the app. If a row's player number
+        // already exists, the evaluation is combined with the existing one. CSV
+        // fields are expected in the same order as the exported file.
+        function importFromCSV(csvText) {
+            const lines = csvText.trim().split(/\r?\n/);
+            if (lines.length <= 1) {
+                alert('The CSV file appears to be empty or malformed.');
+                return;
+            }
+            // Skip header row
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                const values = parseCSVLine(line);
+                // remove surrounding quotes
+                const row = values.map(v => v.replace(/^"(.*)"$/, '$1'));
+                // Ensure there are enough columns
+                if (row.length < 17) continue;
+                const evalObj = {
+                    name: row[1] || '',
+                    playerNumber: row[2] || '',
+                    gender: row[3] || '',
+                    ageGroup: row[4] || '',
+                    running: row[5] || '',
+                    flagPulling: row[6] || '',
+                    catching: row[7] || '',
+                    defense: row[8] || '',
+                    throwing: row[9] || '',
+                    attitude: row[10] || '',
+                    comments: row[11] || '',
+                    pos1: row[12] || '',
+                    pos2: row[13] || '',
+                    // rating column (14) is ignored; we recompute it dynamically
+                    allStar: (row[15] && (row[15].toLowerCase() === 'yes' || row[15].includes('★'))) ? true : false,
+                    scoutName: row[16] || ''
+                };
+                if (evalObj.playerNumber) {
+                    const existingIndex = evaluations.findIndex(ev => ev.playerNumber === evalObj.playerNumber);
+                    if (existingIndex >= 0) {
+                        // combine with existing evaluation
+                        const oldEval = evaluations[existingIndex];
+                        const combined = combineEvaluations(oldEval, evalObj);
+                        history.push({ action: 'update', index: existingIndex, previous: { ...oldEval } });
+                        evaluations[existingIndex] = combined;
+                    } else {
+                        evaluations.push(evalObj);
+                        history.push({ action: 'add', index: evaluations.length - 1 });
+                    }
+                }
+            }
+            renderTable();
+        }
+
+        // Split a CSV line into values. Handles quoted fields containing commas.
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Escaped quote within quoted value
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
         }
     </script>
 </body>
