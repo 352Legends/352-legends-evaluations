@@ -386,9 +386,25 @@
                 }
                 const existingIndex = evaluations.findIndex(ev => ev.playerNumber === selectedNum);
                 if (existingIndex >= 0) {
+                    // Load existing evaluation into edit mode
                     editEvaluation(existingIndex);
                 } else {
+                    // New player: reset editing index and set dash time to 0
                     editingIndex = null;
+                    // Show default dash time as 0
+                    document.getElementById('dashTime').value = '0';
+                    resetDashTimer();
+                    // Clear photo preview and data
+                    playerPhotoData = null;
+                    const preview = document.getElementById('photoPreview');
+                    const deleteBtn = document.getElementById('deletePhotoBtn');
+                    if (preview) preview.style.display = 'none';
+                    if (deleteBtn) deleteBtn.style.display = 'none';
+                    // Reset file input
+                    const photoInput = document.getElementById('playerPhoto');
+                    if (photoInput) photoInput.value = '';
+                    // Ensure gender visibility is updated for new selection
+                    updateGenderVisibility();
                 }
             });
 
@@ -565,8 +581,21 @@
             document.getElementById('pos2').value = e.pos2 || '';
             document.getElementById('allStar').checked = !!e.allStar;
             document.getElementById('comments').value = e.comments;
-            // Set dash time value when editing: use the last recorded dash time
-            document.getElementById('dashTime').value = (e.dashTimes && e.dashTimes.length > 0) ? e.dashTimes[e.dashTimes.length - 1] : '';
+            // Set dash time value when editing: display fastest recorded time
+            let dashVal = '';
+            if (e.dashTimes && e.dashTimes.length > 0) {
+                const nums = e.dashTimes
+                    .map(t => {
+                        const n = parseFloat(t);
+                        return isNaN(n) ? null : n;
+                    })
+                    .filter(n => n !== null);
+                if (nums.length > 0) {
+                    const min = Math.min(...nums);
+                    dashVal = min.toFixed(2);
+                }
+            }
+            document.getElementById('dashTime').value = dashVal;
             // Reset timer buttons when editing
             resetDashTimer();
             // Load photo preview when editing
