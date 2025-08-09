@@ -308,7 +308,7 @@
         <label for="sortOption"><strong>Sort by:</strong></label>
         <select id="sortOption" onchange="applySort()">
             <option value="">Age Group Order</option>
-            <option value="number">Player Number (Asc)</option>
+            <option value="number" selected>Player Number (Asc)</option>
             <option value="rating">Rating (Desc)</option>
         </select>
     </div>
@@ -330,8 +330,8 @@
 
         const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
 
-        // Current sort criterion: '' (default), 'number', or 'rating'
-        let sortBy = '';
+        // Current sort criterion: default to 'number' so rows start sorted by player number
+        let sortBy = 'number';
 
         // Populate player numbers on load
         window.addEventListener('DOMContentLoaded', () => {
