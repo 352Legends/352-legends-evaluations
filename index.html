@@ -416,9 +416,9 @@
                     // Load existing evaluation into edit mode
                     editEvaluation(existingIndex);
                 } else {
-                    // New player: reset editing index and set dash time to 0
+                    // New player: reset editing index and clear form fields
                     editingIndex = null;
-                    // Show default dash time as 0
+                    // Reset dash time to 0 and stop any running timer
                     document.getElementById('dashTime').value = '0';
                     resetDashTimer();
                     // Clear photo preview and data
@@ -430,7 +430,21 @@
                     // Reset file input
                     const photoInput = document.getElementById('playerPhoto');
                     if (photoInput) photoInput.value = '';
-                    // Ensure gender visibility is updated for new selection
+                    // Clear basic fields
+                    document.getElementById('playerName').value = '';
+                    document.getElementById('gender').value = '';
+                    document.getElementById('pos1').value = '';
+                    document.getElementById('pos2').value = '';
+                    document.getElementById('comments').value = '';
+                    document.getElementById('allStar').checked = false;
+                    // Reset star ratings for all skill fields
+                    ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
+                        setStarRating(prefix, '');
+                    });
+                    // Set age group to the master default for new entry
+                    const masterVal = document.getElementById('masterAgeGroup').value;
+                    document.getElementById('ageGroup').value = masterVal;
+                    // Update gender visibility based on age group
                     updateGenderVisibility();
                 }
             });
