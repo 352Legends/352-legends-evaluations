@@ -7,101 +7,132 @@
     <!-- Link to PWA manifest -->
     <link rel="manifest" href="manifest.json">
     <style>
-        /* Mobile-friendly styling similar to desktop but with tighter spacing */
+        /*
+         * Modern, mobile-first styling with a polished red, white and blue palette.
+         * The layout uses generous padding, larger fonts and card-like containers
+         * to make the interface feel contemporary and easy to use on small screens.
+         */
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: #f7f9fc;
+            background-color: #f4f6fb;
             margin: 0;
-            padding: 10px;
+            padding: 12px;
+            color: #1a1a1a;
         }
         h1 {
             text-align: center;
-            color: #00338d;
-            margin-bottom: 10px;
-            font-size: 1.5rem;
+            color: #002b5c;
+            margin: 0 0 12px 0;
+            font-size: 1.8rem;
         }
-        form {
+        /* Card container for the master controls and forms */
+        .card {
             background: #ffffff;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e3e6eb;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            max-width: 100%;
-            margin: 10px auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 16px;
+            margin-bottom: 12px;
         }
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 4px;
-            font-weight: bold;
-            font-size: 0.9rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
         }
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 8px;
+            border: 1px solid #cfd6e3;
+            border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            background-color: #f9fbff;
         }
+        .form-group textarea { resize: vertical; }
+        /* Grid for numeric ratings */
         .ratings {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
         }
+        /* Buttons */
         .btn {
-            padding: 8px 16px;
-            margin-top: 8px;
+            padding: 10px 18px;
+            margin-top: 10px;
             border: none;
-            border-radius: 4px;
-            color: #fff;
+            border-radius: 6px;
+            color: #ffffff;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            display: inline-block;
         }
-        .btn-primary { background-color: #005bb5; }
-        .btn-primary:hover { background-color: #00408a; }
-        .btn-secondary { background-color: #007bff; }
-        .btn-secondary:hover { background-color: #0062cc; }
-        .btn-danger { background-color: #c21807; }
-        .btn-danger:hover { background-color: #9a1305; }
+        .btn-primary { background-color: #00479d; }
+        .btn-primary:hover { background-color: #00336e; }
+        .btn-secondary { background-color: #0066cc; }
+        .btn-secondary:hover { background-color: #004f99; }
+        .btn-danger { background-color: #c62828; }
+        .btn-danger:hover { background-color: #a41e1e; }
+        /* Table styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 12px;
             background: #ffffff;
-            border-radius: 6px;
+            border-radius: 8px;
             overflow-x: auto;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 0.85rem;
         }
         th {
-            background-color: #00338d;
+            background-color: #002b5c;
             color: #ffffff;
-            font-weight: 500;
-            padding: 6px;
+            font-weight: 600;
+            padding: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
-        tbody tr:nth-child(even) { background-color: #f4f8fc; }
+        tbody tr:nth-child(even) { background-color: #f1f5fa; }
         th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
+            border: 1px solid #e1e7f0;
+            padding: 8px;
             text-align: left;
         }
         /* Group header style */
         .group-header {
-            background-color: #fdf2f2;
-            color: #9a1305;
-            font-weight: bold;
+            background-color: #ffe5e5;
+            color: #c62828;
+            font-weight: 700;
             text-align: left;
         }
         /* Highlight master controls */
         #masterAgeGroup, #masterScout {
-            background-color: #fff1f0;
-            border-color: #c21807;
+            background-color: #fff6f6;
+            border-color: #c62828;
+        }
+        /* All-star star styling */
+        .all-star-checkbox input[type="checkbox"] {
+            display: none;
+        }
+        .all-star-checkbox span.star {
+            font-size: 1.5rem;
+            color: #d0d4db;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .all-star-checkbox input[type="checkbox"]:checked + span.star {
+            color: #ffb400;
+        }
+        .all-star-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            vertical-align: middle;
         }
     </style>
 </head>
@@ -169,7 +200,7 @@
         </div>
         <div class="ratings">
             <div class="form-group">
-                <label for="running">Running / Agility (1–5)</label>
+                <label for="running">Running</label>
                 <select id="running">
                     <option value="" disabled selected>--</option>
                     <option value="1">1</option>
@@ -180,7 +211,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="flagPulling">Flag Pulling (1–5)</label>
+                <label for="flagPulling">Flag Pulling</label>
                 <select id="flagPulling">
                     <option value="" disabled selected>--</option>
                     <option value="1">1</option>
@@ -191,7 +222,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="catching">Catching / Route Running (1–5)</label>
+                <label for="catching">Catching</label>
                 <select id="catching">
                     <option value="" disabled selected>--</option>
                     <option value="1">1</option>
@@ -202,7 +233,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="defense">Defensive Skills (1–5)</label>
+                <label for="defense">Defense</label>
                 <select id="defense">
                     <option value="" disabled selected>--</option>
                     <option value="1">1</option>
@@ -213,7 +244,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="throwing">Throwing (1–5, ages 7+)</label>
+                <label for="throwing">Throwing</label>
                 <select id="throwing">
                     <option value="" disabled selected>--</option>
                     <option value="N/A">N/A</option>
@@ -225,7 +256,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="attitude">Attitude / Coachability (1–5)</label>
+                <label for="attitude">Attitude</label>
                 <select id="attitude">
                     <option value="" disabled selected>--</option>
                     <option value="1">1</option>
@@ -255,6 +286,14 @@
                 <option value="RB">RB</option>
             </select>
         </div>
+        <!-- All-Star selection -->
+        <div class="form-group">
+            <label class="all-star-checkbox">
+                <input type="checkbox" id="allStar">
+                <span class="star">&#9733;</span>
+                <span class="all-star-label">All-Star</span>
+            </label>
+        </div>
         <div class="form-group">
             <label for="comments">Comments</label>
             <textarea id="comments" rows="2"></textarea>
@@ -277,7 +316,7 @@
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
-                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>Edit</th><th>Delete</th>
+                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -331,6 +370,7 @@
             const pos1 = document.getElementById('pos1').value;
             const pos2 = document.getElementById('pos2').value;
             const comments = document.getElementById('comments').value.trim();
+            const allStar = document.getElementById('allStar').checked;
             const masterScout = document.getElementById('masterScout').value.trim();
             if (!ageGroup) {
                 alert('Please select an age group.');
@@ -340,7 +380,7 @@
                 alert('Please enter the scout\'s name in the master field.');
                 return;
             }
-            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, comments, pos1, pos2, scoutName: masterScout };
+            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, comments, pos1, pos2, allStar, scoutName: masterScout };
             if (editingIndex !== null) {
                 history.push({ action: 'update', index: editingIndex, previous: { ...evaluations[editingIndex] } });
                 evaluations[editingIndex] = newEval;
@@ -393,7 +433,8 @@
                     currentGroup = ev.ageGroup || '';
                     const groupRow = document.createElement('tr');
                     const groupCell = document.createElement('td');
-                    groupCell.colSpan = 17;
+                    // Update colspan to reflect total number of columns (including All-Star)
+                    groupCell.colSpan = 18;
                     groupCell.className = 'group-header';
                     groupCell.textContent = currentGroup ? `Age Group: ${currentGroup}` : 'Age Group: (unspecified)';
                     groupRow.appendChild(groupCell);
@@ -417,6 +458,7 @@
                     <td>${ev.pos1 || ''}</td>
                     <td>${ev.pos2 || ''}</td>
                     <td>${starRating}</td>
+                    <td>${ev.allStar ? '★' : ''}</td>
                     <td><button type="button" class="btn btn-secondary" onclick="editEvaluation(${origIndex})">Edit</button></td>
                     <td><button type="button" class="btn btn-danger" onclick="deleteEvaluation(${origIndex})">Delete</button></td>
                 `;
@@ -452,6 +494,7 @@
             document.getElementById('attitude').value = e.attitude;
             document.getElementById('pos1').value = e.pos1 || '';
             document.getElementById('pos2').value = e.pos2 || '';
+            document.getElementById('allStar').checked = !!e.allStar;
             document.getElementById('comments').value = e.comments;
             editingIndex = index;
         }
@@ -503,6 +546,8 @@
             updateField('pos1');
             updateField('pos2');
             updateField('scoutName');
+            // Preserve all-star flag if either evaluation marks it
+            combined.allStar = oldEval.allStar || newEval.allStar;
             if (newEval.comments) {
                 if (combined.comments) {
                     combined.comments = combined.comments + '\n' + newEval.comments;
@@ -515,6 +560,8 @@
 
         function clearForm() {
             document.getElementById('evaluationForm').reset();
+            // ensure all-star checkbox is cleared
+            document.getElementById('allStar').checked = false;
             if (lastPlayerNumber) {
                 document.getElementById('playerNumber').value = lastPlayerNumber;
             }
@@ -552,7 +599,7 @@
                 alert('No evaluations to export.');
                 return;
             }
-            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Comments','Pos1','Pos2','Rating','Scout Name'];
+            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Comments','Pos1','Pos2','Rating','All-Star','Scout Name'];
             const sorted = evaluations.map((ev, idx) => ({ ev, idx })).sort((a, b) => {
                 const ai = ageOrder.indexOf(a.ev.ageGroup);
                 const bi = ageOrder.indexOf(b.ev.ageGroup);
@@ -576,6 +623,7 @@
                 item.ev.pos1,
                 item.ev.pos2,
                 computeStarRating(item.ev),
+                item.ev.allStar ? 'Yes' : 'No',
                 item.ev.scoutName
             ]);
             const csvContent = [header.join(','), ...rows.map(r => r.map(val => `"${val}"`).join(','))].join('\n');
