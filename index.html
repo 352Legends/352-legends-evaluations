@@ -149,8 +149,7 @@
         .star-rating .star.selected {
             color: #ffb400;
         }
-        .star-rating .star:hover,
-        .star-rating .star:hover ~ .star {
+        .star-rating .star:hover {
             color: #ff9800;
         }
     </style>
@@ -827,24 +826,35 @@
         });
 
         function combineEvaluations(oldEval, newEval) {
+            // Merge two evaluation objects. Fields in newEval always take precedence,
+            // even if they are empty strings. This allows scouts to clear a
+            // previously entered value (e.g. star ratings) by deselecting.
             const combined = { ...oldEval };
-            function updateField(field, defaultVal = '') {
-                const newVal = newEval[field];
-                if (newVal && newVal !== defaultVal) {
-                    combined[field] = newVal;
+
+            // Helper to update a field. If allowBlank is true, always assign the
+            // new value (including empty strings). Otherwise, only update when
+            // the new value is a non-empty string.
+            function updateField(field, allowBlank = false) {
+                if (Object.prototype.hasOwnProperty.call(newEval, field)) {
+                    const newVal = newEval[field];
+                    if (allowBlank) {
+                        combined[field] = newVal;
+                    } else if (newVal && newVal !== '') {
+                        combined[field] = newVal;
+                    }
                 }
             }
+
+            // Basic fields
             updateField('name');
-            updateField('gender');
-            updateField('ageGroup');
-            updateField('running');
-            updateField('flagPulling');
-            updateField('catching');
-            updateField('defense');
-            if (newEval.throwing && newEval.throwing !== 'N/A') {
-                combined.throwing = newEval.throwing;
-            }
-            updateField('attitude');
+            updateField('gender', true);
+            updateField('ageGroup', true);
+
+            // Ratings: running, flag pulling, catching, defense, throwing, attitude
+            ['running','flagPulling','catching','defense','throwing','attitude'].forEach(f => {
+                updateField(f, true);
+            });
+
             // Merge dash times. Convert legacy dashTime field to array if needed.
             const oldTimes = [];
             if (oldEval.dashTimes && Array.isArray(oldEval.dashTimes)) {
@@ -865,16 +875,18 @@
             combined.dashTimes = [...oldTimes, ...newTimes];
             // Maintain dashTime field for backward compatibility (latest entry)
             combined.dashTime = combined.dashTimes.length > 0 ? combined.dashTimes[combined.dashTimes.length - 1] : '';
-            updateField('photo');
-            updateField('pos1');
-            updateField('pos2');
-            updateField('scoutName');
+
+            // Photo and positions
+            updateField('photo', true);
+            updateField('pos1', true);
+            updateField('pos2', true);
+            updateField('scoutName', true);
+
             // Preserve all-star flag if either evaluation marks it
             combined.allStar = oldEval.allStar || newEval.allStar;
-            // Replace comments with the latest provided comments. Do not append,
-            // because autosave updates should overwrite the text instead of
-            // duplicating it.
-            if (typeof newEval.comments !== 'undefined') {
+
+            // Replace comments with the latest provided comments
+            if (Object.prototype.hasOwnProperty.call(newEval, 'comments')) {
                 combined.comments = newEval.comments;
             }
             return combined;
@@ -944,16 +956,22 @@
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     const val = parseInt(star.getAttribute('data-value'));
-                    hidden.value = val;
-                    // Highlight all stars up to the clicked one
-                    stars.forEach(s => {
-                        const sVal = parseInt(s.getAttribute('data-value'));
-                        if (sVal <= val) {
-                            s.classList.add('selected');
-                        } else {
-                            s.classList.remove('selected');
-                        }
-                    });
+                    const currentVal = parseInt(hidden.value);
+                    // If the clicked star is already selected (same as current value), clear the rating
+                    if (!isNaN(currentVal) && currentVal === val) {
+                        hidden.value = '';
+                        stars.forEach(s => s.classList.remove('selected'));
+                    } else {
+                        hidden.value = val;
+                        stars.forEach(s => {
+                            const sVal = parseInt(s.getAttribute('data-value'));
+                            if (sVal <= val) {
+                                s.classList.add('selected');
+                            } else {
+                                s.classList.remove('selected');
+                            }
+                        });
+                    }
                     autoSaveCurrent();
                 });
             });
