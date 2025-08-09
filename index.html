@@ -188,7 +188,7 @@
     <form id="evaluationForm" style="position: relative;">
         <!-- Overlay shown when master scout name and age group are not set -->
         <div id="formOverlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); display:none; z-index:1000; align-items:center; justify-content:center; text-align:center; padding:20px; font-weight:600; color:#c62828;">
-            Please enter the Scout Name and Default Age Group first.
+            Please enter the Scout Name and League Age first.
         </div>
         <!-- All-Star selection placed above player name -->
         <div class="form-group">
@@ -198,10 +198,14 @@
                 <span class="all-star-label">All-Star</span>
             </label>
         </div>
-        <!-- Player basic information -->
+        <!-- Player basic information: separate first and last name fields -->
         <div class="form-group">
-            <label for="playerName">Player Name</label>
-            <input type="text" id="playerName" placeholder="Enter player name" />
+            <label for="firstName">Player First Name</label>
+            <input type="text" id="firstName" placeholder="Enter first name" />
+        </div>
+        <div class="form-group">
+            <label for="lastName">Player Last Name</label>
+            <input type="text" id="lastName" placeholder="Enter last name" />
         </div>
         <div class="form-group">
             <label for="playerNumber">Player Number</label>
@@ -371,7 +375,7 @@
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
-                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Dash Times (sec)</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Photo</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
+                <th>#</th><th>First Name</th><th>Last Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Dash Times (sec)</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Photo</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -382,6 +386,10 @@
         const evaluations = [];
         let editingIndex = null;
         const history = [];
+        // Map of last selected player number per age group. Keys are age group names,
+        // values are the last chosen player number for that age group. This allows
+        // each league age to maintain its own numbering preference.
+        let lastPlayerNumbers = {};
         let lastPlayerNumber = '';
 
         /**
@@ -394,6 +402,8 @@
             try {
                 localStorage.setItem('evaluations', JSON.stringify(evaluations));
                 localStorage.setItem('lastPlayerNumber', lastPlayerNumber || '');
+                // Persist per-age-group last player numbers map
+                localStorage.setItem('lastPlayerNumbers', JSON.stringify(lastPlayerNumbers));
                 // Persist master scout name and age group so form values survive refresh
                 const masterScoutVal = document.getElementById('masterScout')?.value || '';
                 const masterAgeVal = document.getElementById('masterAgeGroup')?.value || '';
@@ -423,6 +433,17 @@
                 if (storedNum) {
                     lastPlayerNumber = storedNum;
                 }
+                const storedLasts = localStorage.getItem('lastPlayerNumbers');
+                if (storedLasts) {
+                    try {
+                        const parsedLasts = JSON.parse(storedLasts);
+                        if (typeof parsedLasts === 'object' && parsedLasts !== null) {
+                            lastPlayerNumbers = parsedLasts;
+                        }
+                    } catch (err) {
+                        console.error('Failed to parse lastPlayerNumbers', err);
+                    }
+                }
                 // Load persisted master scout name and age group
                 const storedScout = localStorage.getItem('masterScout');
                 if (storedScout) {
@@ -451,7 +472,7 @@
             const enabled = masterName !== '' && masterAge !== '';
             // List of element IDs to toggle
             const fieldIds = [
-                'playerName','playerNumber','gender','playerPhoto','toggleDash',
+                'firstName','lastName','playerNumber','gender','playerPhoto','toggleDash',
                 'pos1','pos2','comments','allStar','exportBtn','importBtn','startNewBtn'
             ];
             fieldIds.forEach(id => {
@@ -500,26 +521,24 @@
             loadDataFromStorage();
 
             const numSelect = document.getElementById('playerNumber');
-            for (let i = 1; i <= 99; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = i;
-                numSelect.appendChild(opt);
-            }
-
-            // If a player number was previously selected, set it as the default
-            // selection when the page loads.
-            if (lastPlayerNumber) {
-                numSelect.value = lastPlayerNumber;
-            }
-            // Set default age group from master
+            // Populate numbers based on the master league age selection on load
             const masterAge = document.getElementById('masterAgeGroup');
+            populateNumberOptions(masterAge.value || '');
+            // Listen for changes to the master age group. Update the age group
+            // on the evaluation form, update number options, reset last number and
+            // update gender visibility accordingly.
             masterAge.addEventListener('change', () => {
-                document.getElementById('ageGroup').value = masterAge.value;
+                const selectedAge = masterAge.value;
+                // Update age group in evaluation form to match master
+                document.getElementById('ageGroup').value = selectedAge;
+                // Repopulate player number options for this age group
+                populateNumberOptions(selectedAge);
+                // Ensure gender visibility is updated when league age changes
                 updateGenderVisibility();
-                // Ensure form availability is updated when the default age group changes
+                // Update form availability when the default age group changes
                 updateFormAvailability();
             });
+            // Set evaluation form age group to current master value on load
             document.getElementById('ageGroup').value = masterAge.value;
 
             // Attach change handler to show/hide gender field based on selected age group
@@ -547,7 +566,8 @@
                     editingIndex = null;
                     return;
                 }
-                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === selectedNum);
+                const ageGroup = document.getElementById('ageGroup').value;
+                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === selectedNum && ev.ageGroup === ageGroup);
                 if (existingIndex >= 0) {
                     // Load existing evaluation into edit mode
                     editEvaluation(existingIndex);
@@ -567,7 +587,8 @@
                     const photoInput = document.getElementById('playerPhoto');
                     if (photoInput) photoInput.value = '';
                     // Clear basic fields
-                    document.getElementById('playerName').value = '';
+                    document.getElementById('firstName').value = '';
+                    document.getElementById('lastName').value = '';
                     document.getElementById('gender').value = '';
                     document.getElementById('pos1').value = '';
                     document.getElementById('pos2').value = '';
@@ -588,7 +609,7 @@
             // Attach auto-save handlers to form inputs. Whenever a field changes and a
             // player number is selected, the current evaluation is saved automatically.
             const autoSaveFields = [
-                'playerName','gender','pos1','pos2','comments','allStar'
+                'firstName','lastName','gender','pos1','pos2','comments','allStar'
             ];
             autoSaveFields.forEach(id => {
                 const el = document.getElementById(id);
@@ -629,8 +650,39 @@
             }
         }
 
+        /**
+         * Populate the player number select with values 1 through 100 for the given age group.
+         * This function clears existing number options (except the placeholder) and
+         * sets the selected value to the last player number used for that age group, if any.
+         */
+        function populateNumberOptions(ageGroup) {
+            const numSelect = document.getElementById('playerNumber');
+            if (!numSelect) return;
+            // Preserve the first option (placeholder)
+            const placeholder = numSelect.options[0];
+            // Remove all other options
+            while (numSelect.options.length > 1) {
+                numSelect.remove(1);
+            }
+            // Add options 1 through 100
+            for (let i = 1; i <= 100; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                numSelect.appendChild(opt);
+            }
+            // Set the selected number based on lastPlayerNumbers map
+            const lastForGroup = lastPlayerNumbers[ageGroup];
+            if (lastForGroup) {
+                numSelect.value = lastForGroup;
+            } else {
+                numSelect.value = '';
+            }
+        }
+
         function addEvaluation() {
-            const name = document.getElementById('playerName').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const playerNumber = document.getElementById('playerNumber').value;
             const gender = document.getElementById('gender').value;
             const ageGroup = document.getElementById('ageGroup').value;
@@ -648,7 +700,7 @@
             const allStar = document.getElementById('allStar').checked;
             const masterScout = document.getElementById('masterScout').value.trim();
             if (!ageGroup) {
-                alert('Please select an age group.');
+                alert('Please select a League Age.');
                 return;
             }
             if (!masterScout) {
@@ -662,7 +714,7 @@
                 dashTimes.push(dashTime);
             }
             // Build new evaluation object with dashTimes instead of single dashTime value.
-            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTimes, comments, pos1, pos2, allStar, photo, scoutName: masterScout };
+            const newEval = { firstName, lastName, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTimes, comments, pos1, pos2, allStar, photo, scoutName: masterScout };
             if (editingIndex !== null) {
                 // Updating existing evaluation: merge with new values via combineEvaluations
                 history.push({ action: 'update', index: editingIndex, previous: { ...evaluations[editingIndex] } });
@@ -670,7 +722,7 @@
                 evaluations[editingIndex] = merged;
                 editingIndex = null;
             } else {
-                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === playerNumber && playerNumber !== '');
+                const existingIndex = evaluations.findIndex(ev => ev.playerNumber === playerNumber && ev.ageGroup === ageGroup && playerNumber !== '');
                 if (existingIndex >= 0) {
                     const oldEval = evaluations[existingIndex];
                     const combined = combineEvaluations(oldEval, newEval);
@@ -682,6 +734,10 @@
                 }
             }
             lastPlayerNumber = playerNumber;
+            // Track last selected player number for this age group
+            if (ageGroup) {
+                lastPlayerNumbers[ageGroup] = playerNumber;
+            }
             renderTable();
             clearForm();
         }
@@ -718,7 +774,8 @@
                     const groupRow = document.createElement('tr');
                     const groupCell = document.createElement('td');
                     // Update colspan to reflect total number of columns (including All-Star)
-                    groupCell.colSpan = 20;
+                    // There are 21 columns in the table (including index, names, number, etc.), so span all columns for group header
+                    groupCell.colSpan = 21;
                     groupCell.className = 'group-header';
                     groupCell.textContent = currentGroup ? `Age Group: ${currentGroup}` : 'Age Group: (unspecified)';
                     groupRow.appendChild(groupCell);
@@ -728,7 +785,8 @@
                 const starRating = computeStarRating(ev);
                 row.innerHTML = `
                     <td>${displayIndex}</td>
-                    <td>${ev.name || ''}</td>
+                    <td>${ev.firstName || ''}</td>
+                    <td>${ev.lastName || ''}</td>
                     <td>${ev.playerNumber || ''}</td>
                     <td>${ev.gender || ''}</td>
                     <td>${ev.ageGroup || ''}</td>
@@ -772,7 +830,8 @@
 
         function editEvaluation(index) {
             const e = evaluations[index];
-            document.getElementById('playerName').value = e.name;
+            document.getElementById('firstName').value = e.firstName || '';
+            document.getElementById('lastName').value = e.lastName || '';
             document.getElementById('playerNumber').value = e.playerNumber;
             document.getElementById('gender').value = e.gender;
             document.getElementById('ageGroup').value = e.ageGroup;
@@ -844,10 +903,13 @@
             history.splice(0, history.length);
             editingIndex = null;
             lastPlayerNumber = '';
+            // Reset per-age-group last numbers
+            lastPlayerNumbers = {};
             // Remove stored data
             try {
                 localStorage.removeItem('evaluations');
                 localStorage.removeItem('lastPlayerNumber');
+                localStorage.removeItem('lastPlayerNumbers');
             } catch (e) {
                 console.error('Failed to clear localStorage', e);
             }
@@ -861,7 +923,8 @@
                 setStarRating(prefix, '');
             });
             document.getElementById('allStar').checked = false;
-            document.getElementById('playerName').value = '';
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
             document.getElementById('gender').value = '';
             document.getElementById('dashTime').value = '0';
             resetDashTimer();
@@ -940,7 +1003,8 @@
             const masterScout = document.getElementById('masterScout').value.trim();
             if (!ageGroup || !masterScout) return;
             // Gather current field values
-            const name = document.getElementById('playerName').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const gender = document.getElementById('gender').value;
             const running = document.getElementById('runningVal').value;
             const flagPulling = document.getElementById('flagPullingVal').value;
@@ -960,8 +1024,8 @@
                 dashTimes.push(dashTimeVal);
             }
             const photo = playerPhotoData;
-            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTimes, comments, pos1, pos2, allStar, photo, scoutName: masterScout };
-            const existingIndex = evaluations.findIndex(ev => ev.playerNumber === playerNumber);
+            const newEval = { firstName, lastName, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTimes, comments, pos1, pos2, allStar, photo, scoutName: masterScout };
+            const existingIndex = evaluations.findIndex(ev => ev.playerNumber === playerNumber && ev.ageGroup === ageGroup);
             if (existingIndex >= 0) {
                 // merge with existing
                 const oldEval = evaluations[existingIndex];
@@ -977,6 +1041,10 @@
                 editingIndex = evaluations.length - 1;
             }
             lastPlayerNumber = playerNumber;
+            // Update last number for current age group
+            if (ageGroup) {
+                lastPlayerNumbers[ageGroup] = playerNumber;
+            }
             renderTable();
         }
 
@@ -1057,7 +1125,8 @@
             }
 
             // Basic fields
-            updateField('name');
+            updateField('firstName');
+            updateField('lastName');
             updateField('gender', true);
             updateField('ageGroup', true);
 
@@ -1238,7 +1307,7 @@
                 alert('No evaluations to export.');
                 return;
             }
-            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Dash Times','Comments','Pos1','Pos2','Photo','Rating','All-Star','Scout Name'];
+            const header = ['No.','First Name','Last Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Dash Times','Comments','Pos1','Pos2','Photo','Rating','All-Star','Scout Name'];
             const sorted = evaluations.map((ev, idx) => ({ ev, idx })).sort((a, b) => {
                 const ai = ageOrder.indexOf(a.ev.ageGroup);
                 const bi = ageOrder.indexOf(b.ev.ageGroup);
@@ -1251,7 +1320,8 @@
                 const numericRating = computeNumericAverage(item.ev);
                 return [
                     idx + 1,
-                    item.ev.name,
+                    item.ev.firstName || '',
+                    item.ev.lastName || '',
                     item.ev.playerNumber,
                     item.ev.gender,
                     item.ev.ageGroup,
@@ -1314,36 +1384,38 @@
                 const values = parseCSVLine(line);
                 // remove surrounding quotes
                 const row = values.map(v => v.replace(/^"(.*)"$/, '$1'));
-                // Ensure there are enough columns (including dash time, photo, and scout name)
-                if (row.length < 19) continue;
+                // Ensure there are enough columns (including dash times, photo, rating, all-star, and scout name)
+                if (row.length < 20) continue;
                 // Parse dash times string (may contain up to 3 semicolon-separated times)
-                const dashString = row[11] || '';
+                const dashString = row[12] || '';
                 let dashTimes = [];
                 if (dashString) {
                     dashTimes = dashString.split(/;|,/).map(v => v.trim()).filter(v => v);
                 }
                 const evalObj = {
-                    name: row[1] || '',
-                    playerNumber: row[2] || '',
-                    gender: row[3] || '',
-                    ageGroup: row[4] || '',
-                    running: row[5] || '',
-                    flagPulling: row[6] || '',
-                    catching: row[7] || '',
-                    defense: row[8] || '',
-                    throwing: row[9] || '',
-                    attitude: row[10] || '',
+                    firstName: row[1] || '',
+                    lastName: row[2] || '',
+                    playerNumber: row[3] || '',
+                    gender: row[4] || '',
+                    ageGroup: row[5] || '',
+                    running: row[6] || '',
+                    flagPulling: row[7] || '',
+                    catching: row[8] || '',
+                    defense: row[9] || '',
+                    throwing: row[10] || '',
+                    attitude: row[11] || '',
                     dashTimes: dashTimes,
-                    comments: row[12] || '',
-                    pos1: row[13] || '',
-                    pos2: row[14] || '',
-                    photo: row[15] || '',
-                    // rating column (16) is ignored; we recompute it dynamically
-                    allStar: (row[17] && (row[17].toLowerCase() === 'yes' || row[17].includes('★'))) ? true : false,
-                    scoutName: row[18] || ''
+                    comments: row[13] || '',
+                    pos1: row[14] || '',
+                    pos2: row[15] || '',
+                    photo: row[16] || '',
+                    // rating column (17) is ignored; we recompute it dynamically
+                    allStar: (row[18] && (row[18].toLowerCase() === 'yes' || row[18].includes('★'))) ? true : false,
+                    scoutName: row[19] || ''
                 };
                 if (evalObj.playerNumber) {
-                    const existingIndex = evaluations.findIndex(ev => ev.playerNumber === evalObj.playerNumber);
+                    // Look for an existing evaluation with the same player number and age group
+                    const existingIndex = evaluations.findIndex(ev => ev.playerNumber === evalObj.playerNumber && ev.ageGroup === evalObj.ageGroup);
                     if (existingIndex >= 0) {
                         // combine with existing evaluation
                         const oldEval = evaluations[existingIndex];
@@ -1353,6 +1425,10 @@
                     } else {
                         evaluations.push(evalObj);
                         history.push({ action: 'add', index: evaluations.length - 1 });
+                    }
+                    // Update last player number mapping for this age group
+                    if (evalObj.ageGroup) {
+                        lastPlayerNumbers[evalObj.ageGroup] = evalObj.playerNumber;
                     }
                 }
             }
