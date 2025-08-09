@@ -342,6 +342,7 @@
         <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
         <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
+        <button type="button" class="btn btn-danger" onclick="startNew()" style="margin-left:8px;">Start New</button>
         <!-- Hidden file input for CSV import -->
         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)" />
     </form>
@@ -371,6 +372,45 @@
         const history = [];
         let lastPlayerNumber = '';
 
+        /**
+         * Persist the current evaluations and lastPlayerNumber to localStorage. This
+         * function should be called whenever the evaluations array or the last
+         * selected player number changes. Keeping the data in localStorage
+         * ensures it is retained across page reloads.
+         */
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem('evaluations', JSON.stringify(evaluations));
+                localStorage.setItem('lastPlayerNumber', lastPlayerNumber || '');
+            } catch (e) {
+                console.error('Failed to save to localStorage', e);
+            }
+        }
+
+        /**
+         * Load evaluations and lastPlayerNumber from localStorage. If no data
+         * exists, the evaluations array remains empty. Use this on page load
+         * before rendering the table so previously saved evaluations appear
+         * automatically.
+         */
+        function loadDataFromStorage() {
+            try {
+                const stored = localStorage.getItem('evaluations');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        evaluations.splice(0, evaluations.length, ...parsed);
+                    }
+                }
+                const storedNum = localStorage.getItem('lastPlayerNumber');
+                if (storedNum) {
+                    lastPlayerNumber = storedNum;
+                }
+            } catch (e) {
+                console.error('Failed to load from localStorage', e);
+            }
+        }
+
         const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
 
         // Current sort criterion: default to 'number' so rows start sorted by player number
@@ -378,12 +418,23 @@
 
         // Populate player numbers on load
         window.addEventListener('DOMContentLoaded', () => {
+            // Load stored evaluations and last selected player number from
+            // localStorage before initializing the UI. This allows previously
+            // entered data to appear automatically upon refresh.
+            loadDataFromStorage();
+
             const numSelect = document.getElementById('playerNumber');
             for (let i = 1; i <= 99; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
                 opt.textContent = i;
                 numSelect.appendChild(opt);
+            }
+
+            // If a player number was previously selected, set it as the default
+            // selection when the page loads.
+            if (lastPlayerNumber) {
+                numSelect.value = lastPlayerNumber;
             }
             // Set default age group from master
             const masterAge = document.getElementById('masterAgeGroup');
@@ -464,6 +515,9 @@
                     }
                 }
             });
+
+            // Render the table after loading any existing evaluations from storage.
+            renderTable();
             // Save automatically when dash timer stops (handled in toggleDashTimer)
             // Save automatically when photo is selected or deleted (handled in respective functions)
 
@@ -615,6 +669,10 @@
             if (sortControls) {
                 sortControls.style.display = evaluations.length > 0 ? 'block' : 'none';
             }
+
+            // Persist the latest evaluations and last selected player number to
+            // localStorage after rendering. This ensures data survives page reloads.
+            saveDataToStorage();
         }
 
         // Apply selected sort criterion and re-render the table
@@ -686,6 +744,57 @@
                 evaluations.splice(index, 1);
                 renderTable();
             }
+        }
+
+        // Completely clear all saved evaluations and reset the form. This will
+        // remove any persisted data from localStorage and start a fresh session.
+        function startNew() {
+            const confirmClear = confirm('Are you sure you want to start a new session? This will delete all saved evaluations.');
+            if (!confirmClear) return;
+            // Clear in-memory evaluations and history
+            evaluations.splice(0, evaluations.length);
+            history.splice(0, history.length);
+            editingIndex = null;
+            lastPlayerNumber = '';
+            // Remove stored data
+            try {
+                localStorage.removeItem('evaluations');
+                localStorage.removeItem('lastPlayerNumber');
+            } catch (e) {
+                console.error('Failed to clear localStorage', e);
+            }
+            // Clear the form fields and reset default age group and player number
+            const form = document.getElementById('evaluationForm');
+            if (form) {
+                form.reset();
+            }
+            // Clear star ratings, photo and dash time
+            ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
+                setStarRating(prefix, '');
+            });
+            document.getElementById('allStar').checked = false;
+            document.getElementById('playerName').value = '';
+            document.getElementById('gender').value = '';
+            document.getElementById('dashTime').value = '0';
+            resetDashTimer();
+            playerPhotoData = null;
+            const preview = document.getElementById('photoPreview');
+            const deleteBtn = document.getElementById('deletePhotoBtn');
+            if (preview) preview.style.display = 'none';
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            const photoInput = document.getElementById('playerPhoto');
+            if (photoInput) photoInput.value = '';
+            document.getElementById('pos1').value = '';
+            document.getElementById('pos2').value = '';
+            document.getElementById('comments').value = '';
+            // Reset player number select to default (no selection)
+            document.getElementById('playerNumber').value = '';
+            // Reset age group to master default
+            const masterVal = document.getElementById('masterAgeGroup').value;
+            document.getElementById('ageGroup').value = masterVal;
+            updateGenderVisibility();
+            // Re-render the table (will be empty) and persist the empty state
+            renderTable();
         }
 
         function undoLast() {
