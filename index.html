@@ -134,6 +134,25 @@
             font-size: 0.95rem;
             vertical-align: middle;
         }
+
+        /* Star rating styles for skill evaluations */
+        .star-rating {
+            display: flex;
+            gap: 4px;
+        }
+        .star-rating .star {
+            font-size: 1.4rem;
+            color: #d0d4db;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating .star.selected {
+            color: #ffb400;
+        }
+        .star-rating .star:hover,
+        .star-rating .star:hover ~ .star {
+            color: #ff9800;
+        }
     </style>
 </head>
 <body>
@@ -225,72 +244,77 @@
             </div>
         </div>
         <div class="ratings">
+            <!-- Running star rating -->
             <div class="form-group">
-                <label for="running">Running</label>
-                <select id="running">
-                    <option value="" disabled selected>--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="runningVal">Running</label>
+                <div class="star-rating" id="runningRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="runningVal" value="">
             </div>
+            <!-- Flag pulling star rating -->
             <div class="form-group">
-                <label for="flagPulling">Flag Pulling</label>
-                <select id="flagPulling">
-                    <option value="" disabled selected>--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="flagPullingVal">Flag Pulling</label>
+                <div class="star-rating" id="flagPullingRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="flagPullingVal" value="">
             </div>
+            <!-- Catching star rating -->
             <div class="form-group">
-                <label for="catching">Catching</label>
-                <select id="catching">
-                    <option value="" disabled selected>--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="catchingVal">Catching</label>
+                <div class="star-rating" id="catchingRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="catchingVal" value="">
             </div>
+            <!-- Defense star rating -->
             <div class="form-group">
-                <label for="defense">Defense</label>
-                <select id="defense">
-                    <option value="" disabled selected>--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="defenseVal">Defense</label>
+                <div class="star-rating" id="defenseRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="defenseVal" value="">
             </div>
+            <!-- Throwing star rating -->
             <div class="form-group">
-                <label for="throwing">Throwing</label>
-                <select id="throwing">
-                    <option value="" disabled selected>--</option>
-                    <option value="N/A">N/A</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="throwingVal">Throwing</label>
+                <div class="star-rating" id="throwingRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="throwingVal" value="">
             </div>
+            <!-- Attitude star rating -->
             <div class="form-group">
-                <label for="attitude">Attitude</label>
-                <select id="attitude">
-                    <option value="" disabled selected>--</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
+                <label for="attitudeVal">Attitude</label>
+                <div class="star-rating" id="attitudeRating">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <input type="hidden" id="attitudeVal" value="">
             </div>
         </div>
         <!-- Key positions -->
@@ -316,7 +340,6 @@
             <label for="comments">Comments</label>
             <textarea id="comments" rows="2"></textarea>
         </div>
-        <button type="button" class="btn btn-primary" onclick="addEvaluation()">Save Evaluation</button>
         <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
         <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
@@ -377,6 +400,11 @@
             // Initial call to set gender visibility on load
             updateGenderVisibility();
 
+            // Initialize star rating widgets
+            ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
+                initStarRating(prefix);
+            });
+
             // Automatically enter edit mode when a selected player number already exists
             numSelect.addEventListener('change', () => {
                 const selectedNum = numSelect.value;
@@ -411,8 +439,7 @@
             // Attach auto-save handlers to form inputs. Whenever a field changes and a
             // player number is selected, the current evaluation is saved automatically.
             const autoSaveFields = [
-                'playerName','gender','running','flagPulling','catching','defense',
-                'throwing','attitude','pos1','pos2','comments','allStar'
+                'playerName','gender','pos1','pos2','comments','allStar'
             ];
             autoSaveFields.forEach(id => {
                 const el = document.getElementById(id);
@@ -452,13 +479,13 @@
             const playerNumber = document.getElementById('playerNumber').value;
             const gender = document.getElementById('gender').value;
             const ageGroup = document.getElementById('ageGroup').value;
-            const running = document.getElementById('running').value;
-            const flagPulling = document.getElementById('flagPulling').value;
-            const catching = document.getElementById('catching').value;
-            const defense = document.getElementById('defense').value;
-            const throwSel = document.getElementById('throwing').value;
-            const throwing = throwSel && throwSel !== 'N/A' ? throwSel : 'N/A';
-            const attitude = document.getElementById('attitude').value;
+            const running = document.getElementById('runningVal').value;
+            const flagPulling = document.getElementById('flagPullingVal').value;
+            const catching = document.getElementById('catchingVal').value;
+            const defense = document.getElementById('defenseVal').value;
+            const throwVal = document.getElementById('throwingVal').value;
+            const throwing = throwVal ? throwVal : 'N/A';
+            const attitude = document.getElementById('attitudeVal').value;
             const pos1 = document.getElementById('pos1').value;
             const pos2 = document.getElementById('pos2').value;
             const comments = document.getElementById('comments').value.trim();
@@ -590,12 +617,17 @@
             document.getElementById('playerNumber').value = e.playerNumber;
             document.getElementById('gender').value = e.gender;
             document.getElementById('ageGroup').value = e.ageGroup;
-            document.getElementById('running').value = e.running;
-            document.getElementById('flagPulling').value = e.flagPulling;
-            document.getElementById('catching').value = e.catching;
-            document.getElementById('defense').value = e.defense;
-            document.getElementById('throwing').value = e.throwing !== 'N/A' ? e.throwing : '';
-            document.getElementById('attitude').value = e.attitude;
+            // Update star ratings for skill fields
+            setStarRating('running', e.running);
+            setStarRating('flagPulling', e.flagPulling);
+            setStarRating('catching', e.catching);
+            setStarRating('defense', e.defense);
+            if (e.throwing && e.throwing !== 'N/A') {
+                setStarRating('throwing', e.throwing);
+            } else {
+                setStarRating('throwing', '');
+            }
+            setStarRating('attitude', e.attitude);
             document.getElementById('pos1').value = e.pos1 || '';
             document.getElementById('pos2').value = e.pos2 || '';
             document.getElementById('allStar').checked = !!e.allStar;
@@ -700,13 +732,13 @@
             // Gather current field values
             const name = document.getElementById('playerName').value.trim();
             const gender = document.getElementById('gender').value;
-            const running = document.getElementById('running').value;
-            const flagPulling = document.getElementById('flagPulling').value;
-            const catching = document.getElementById('catching').value;
-            const defense = document.getElementById('defense').value;
-            const throwSel = document.getElementById('throwing').value;
-            const throwing = throwSel && throwSel !== 'N/A' ? throwSel : 'N/A';
-            const attitude = document.getElementById('attitude').value;
+            const running = document.getElementById('runningVal').value;
+            const flagPulling = document.getElementById('flagPullingVal').value;
+            const catching = document.getElementById('catchingVal').value;
+            const defense = document.getElementById('defenseVal').value;
+            const throwVal = document.getElementById('throwingVal').value;
+            const throwing = throwVal ? throwVal : 'N/A';
+            const attitude = document.getElementById('attitudeVal').value;
             const pos1 = document.getElementById('pos1').value;
             const pos2 = document.getElementById('pos2').value;
             const comments = document.getElementById('comments').value.trim();
@@ -839,12 +871,11 @@
             updateField('scoutName');
             // Preserve all-star flag if either evaluation marks it
             combined.allStar = oldEval.allStar || newEval.allStar;
-            if (newEval.comments) {
-                if (combined.comments) {
-                    combined.comments = combined.comments + '\n' + newEval.comments;
-                } else {
-                    combined.comments = newEval.comments;
-                }
+            // Replace comments with the latest provided comments. Do not append,
+            // because autosave updates should overwrite the text instead of
+            // duplicating it.
+            if (typeof newEval.comments !== 'undefined') {
+                combined.comments = newEval.comments;
             }
             return combined;
         }
@@ -871,6 +902,17 @@
             if (preview) preview.style.display = 'none';
             const deleteBtn = document.getElementById('deletePhotoBtn');
             if (deleteBtn) deleteBtn.style.display = 'none';
+
+            // reset star ratings (clear hidden values and deselect stars)
+            ['running','flagPulling','catching','defense','throwing','attitude'].forEach(prefix => {
+                const hidden = document.getElementById(prefix + 'Val');
+                const container = document.getElementById(prefix + 'Rating');
+                if (hidden) hidden.value = '';
+                if (container) {
+                    const stars = container.querySelectorAll('.star');
+                    stars.forEach(s => s.classList.remove('selected'));
+                }
+            });
         }
 
         function computeNumericAverage(ev) {
@@ -889,6 +931,51 @@
             if (values.length === 0) return 0;
             const sum = values.reduce((a,b) => a + b, 0);
             return sum / values.length;
+        }
+
+        // Initialize star rating groups. For each prefix (e.g. 'running'), attach
+        // click handlers to the stars that set the selected value and update
+        // appearance. When a star is clicked, it also triggers auto-save.
+        function initStarRating(prefix) {
+            const container = document.getElementById(prefix + 'Rating');
+            const hidden = document.getElementById(prefix + 'Val');
+            if (!container || !hidden) return;
+            const stars = container.querySelectorAll('.star');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const val = parseInt(star.getAttribute('data-value'));
+                    hidden.value = val;
+                    // Highlight all stars up to the clicked one
+                    stars.forEach(s => {
+                        const sVal = parseInt(s.getAttribute('data-value'));
+                        if (sVal <= val) {
+                            s.classList.add('selected');
+                        } else {
+                            s.classList.remove('selected');
+                        }
+                    });
+                    autoSaveCurrent();
+                });
+            });
+        }
+
+        // Set star rating value programmatically (used when editing). Clears
+        // previous selection and marks stars up to the specified value.
+        function setStarRating(prefix, value) {
+            const container = document.getElementById(prefix + 'Rating');
+            const hidden = document.getElementById(prefix + 'Val');
+            if (!container || !hidden) return;
+            const val = parseInt(value);
+            hidden.value = (!isNaN(val) && val > 0) ? val : '';
+            const stars = container.querySelectorAll('.star');
+            stars.forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-value'));
+                if (!isNaN(val) && sVal <= val) {
+                    s.classList.add('selected');
+                } else {
+                    s.classList.remove('selected');
+                }
+            });
         }
 
         function computeStarRating(ev) {
