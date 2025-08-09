@@ -152,6 +152,12 @@
         .star-rating .star:hover {
             color: #ff9800;
         }
+
+            /* Responsive table container for horizontal scrolling */
+            .table-container {
+                overflow-x: auto;
+                width: 100%;
+            }
     </style>
 </head>
 <body>
@@ -179,7 +185,11 @@
         </div>
     </div>
 
-    <form id="evaluationForm">
+    <form id="evaluationForm" style="position: relative;">
+        <!-- Overlay shown when master scout name and age group are not set -->
+        <div id="formOverlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); display:none; z-index:1000; align-items:center; justify-content:center; text-align:center; padding:20px; font-weight:600; color:#c62828;">
+            Please enter the Scout Name and Default Age Group first.
+        </div>
         <!-- All-Star selection placed above player name -->
         <div class="form-group">
             <label class="all-star-checkbox">
@@ -337,11 +347,11 @@
         </div>
         <div class="form-group">
             <label for="comments">Comments</label>
-            <textarea id="comments" rows="2"></textarea>
+            <textarea id="comments" style="min-height: 100px;"></textarea>
         </div>
         <button type="button" class="btn btn-secondary" id="exportBtn" onclick="exportCSV()">Export CSV</button>
         <button type="button" class="btn btn-secondary" id="importBtn" onclick="document.getElementById('csvInput').click()">Import CSV</button>
-        <button type="button" class="btn btn-danger" id="undoBtn" onclick="undoLast()">Undo</button>
+        <!-- Undo button removed as per latest requirements -->
         <button type="button" class="btn btn-danger" id="startNewBtn" onclick="startNew()" style="margin-left:8px;">Start New</button>
         <!-- Hidden file input for CSV import -->
         <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)" />
@@ -357,6 +367,7 @@
         </select>
     </div>
 
+    <div class="table-container">
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
@@ -365,6 +376,7 @@
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
+    </div>
 
     <script>
         const evaluations = [];
@@ -424,7 +436,7 @@
             // List of element IDs to toggle
             const fieldIds = [
                 'playerName','playerNumber','gender','playerPhoto','toggleDash',
-                'pos1','pos2','comments','allStar','exportBtn','importBtn','undoBtn','startNewBtn'
+                'pos1','pos2','comments','allStar','exportBtn','importBtn','startNewBtn'
             ];
             fieldIds.forEach(id => {
                 const el = document.getElementById(id);
@@ -443,6 +455,12 @@
             // Also disable import file input (csvInput)
             const csvInput = document.getElementById('csvInput');
             if (csvInput) csvInput.disabled = !enabled;
+
+            // Show or hide overlay to block interactions when disabled
+            const overlay = document.getElementById('formOverlay');
+            if (overlay) {
+                overlay.style.display = enabled ? 'none' : 'flex';
+            }
         }
 
         const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
