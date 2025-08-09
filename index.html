@@ -169,7 +169,7 @@
             <input type="text" id="masterScout" placeholder="Enter scout name" />
         </div>
         <div class="form-group">
-            <label for="masterAgeGroup"><strong>Default Age Group</strong></label>
+            <label for="masterAgeGroup"><strong>League Age</strong></label>
             <select id="masterAgeGroup">
                 <option value="">Select age group</option>
                 <option value="5U">5U</option>
@@ -394,6 +394,11 @@
             try {
                 localStorage.setItem('evaluations', JSON.stringify(evaluations));
                 localStorage.setItem('lastPlayerNumber', lastPlayerNumber || '');
+                // Persist master scout name and age group so form values survive refresh
+                const masterScoutVal = document.getElementById('masterScout')?.value || '';
+                const masterAgeVal = document.getElementById('masterAgeGroup')?.value || '';
+                localStorage.setItem('masterScout', masterScoutVal);
+                localStorage.setItem('masterAgeGroup', masterAgeVal);
             } catch (e) {
                 console.error('Failed to save to localStorage', e);
             }
@@ -417,6 +422,17 @@
                 const storedNum = localStorage.getItem('lastPlayerNumber');
                 if (storedNum) {
                     lastPlayerNumber = storedNum;
+                }
+                // Load persisted master scout name and age group
+                const storedScout = localStorage.getItem('masterScout');
+                if (storedScout) {
+                    const masterScoutInput = document.getElementById('masterScout');
+                    if (masterScoutInput) masterScoutInput.value = storedScout;
+                }
+                const storedAge = localStorage.getItem('masterAgeGroup');
+                if (storedAge) {
+                    const masterAgeInput = document.getElementById('masterAgeGroup');
+                    if (masterAgeInput) masterAgeInput.value = storedAge;
                 }
             } catch (e) {
                 console.error('Failed to load from localStorage', e);
@@ -460,6 +476,14 @@
             const overlay = document.getElementById('formOverlay');
             if (overlay) {
                 overlay.style.display = enabled ? 'none' : 'flex';
+            }
+
+            // Persist master fields to localStorage whenever availability updates
+            try {
+                localStorage.setItem('masterScout', masterName);
+                localStorage.setItem('masterAgeGroup', masterAge);
+            } catch (e) {
+                console.error('Failed to save master values', e);
             }
         }
 
@@ -579,6 +603,9 @@
 
             // Render the table after loading any existing evaluations from storage.
             renderTable();
+
+                // After loading master fields from storage, ensure form availability state and overlay are correct
+                updateFormAvailability();
             // Save automatically when dash timer stops (handled in toggleDashTimer)
             // Save automatically when photo is selected or deleted (handled in respective functions)
 
@@ -1219,27 +1246,31 @@
                 const biPos = bi >= 0 ? bi : ageOrder.length;
                 return aiPos - biPos || a.idx - b.idx;
             });
-            const rows = sorted.map((item, idx) => [
-                idx + 1,
-                item.ev.name,
-                item.ev.playerNumber,
-                item.ev.gender,
-                item.ev.ageGroup,
-                item.ev.running,
-                item.ev.flagPulling,
-                item.ev.catching,
-                item.ev.defense,
-                item.ev.throwing,
-                item.ev.attitude,
-                getBestDashTimes(item.ev),
-                item.ev.comments,
-                item.ev.pos1,
-                item.ev.pos2,
-                item.ev.photo || '',
-                computeStarRating(item.ev),
-                item.ev.allStar ? 'Yes' : 'No',
-                item.ev.scoutName
-            ]);
+            const rows = sorted.map((item, idx) => {
+                // Compute numeric rating (1-5) instead of star representation
+                const numericRating = computeNumericAverage(item.ev);
+                return [
+                    idx + 1,
+                    item.ev.name,
+                    item.ev.playerNumber,
+                    item.ev.gender,
+                    item.ev.ageGroup,
+                    item.ev.running,
+                    item.ev.flagPulling,
+                    item.ev.catching,
+                    item.ev.defense,
+                    item.ev.throwing,
+                    item.ev.attitude,
+                    getBestDashTimes(item.ev),
+                    item.ev.comments,
+                    item.ev.pos1,
+                    item.ev.pos2,
+                    item.ev.photo || '',
+                    numericRating ? numericRating.toFixed(2) : '',
+                    item.ev.allStar ? 'Yes' : 'No',
+                    item.ev.scoutName
+                ];
+            });
             const csvContent = [header.join(','), ...rows.map(r => r.map(val => `"${val}"`).join(','))].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
