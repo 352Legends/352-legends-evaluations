@@ -264,6 +264,16 @@
         <button type="button" class="btn btn-danger" onclick="undoLast()">Undo</button>
     </form>
 
+    <!-- Sort controls (hidden until there is data) -->
+    <div id="sortControls" style="display:none; margin-top: 10px; max-width: 100%;">
+        <label for="sortOption"><strong>Sort by:</strong></label>
+        <select id="sortOption" onchange="applySort()">
+            <option value="">Age Group Order</option>
+            <option value="number">Player Number (Asc)</option>
+            <option value="rating">Rating (Desc)</option>
+        </select>
+    </div>
+
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
@@ -280,6 +290,9 @@
         let lastPlayerNumber = '';
 
         const ageOrder = ['5U','7U','9U','11U','13U','Girls 6-8','Girls 9-11','Girls 12-14','Coed Highschool'];
+
+        // Current sort criterion: '' (default), 'number', or 'rating'
+        let sortBy = '';
 
         // Populate player numbers on load
         window.addEventListener('DOMContentLoaded', () => {
@@ -353,12 +366,25 @@
             const table = document.getElementById('evaluationTable');
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
+            // Sort evaluations by age group and current sort criterion within group
             const sorted = evaluations.map((ev, idx) => ({ ev, origIndex: idx })).sort((a, b) => {
+                // sort by age group order first
                 const ai = ageOrder.indexOf(a.ev.ageGroup);
                 const bi = ageOrder.indexOf(b.ev.ageGroup);
                 const aiPos = ai >= 0 ? ai : ageOrder.length;
                 const biPos = bi >= 0 ? bi : ageOrder.length;
-                return aiPos - biPos || a.origIndex - b.origIndex;
+                if (aiPos !== biPos) return aiPos - biPos;
+                // within same age group, apply sort criterion
+                if (sortBy === 'number') {
+                    const aNum = parseInt(a.ev.playerNumber) || 0;
+                    const bNum = parseInt(b.ev.playerNumber) || 0;
+                    if (aNum !== bNum) return aNum - bNum;
+                } else if (sortBy === 'rating') {
+                    const ratingDiff = computeNumericAverage(b.ev) - computeNumericAverage(a.ev);
+                    if (ratingDiff !== 0) return ratingDiff;
+                }
+                // fallback to insertion order
+                return a.origIndex - b.origIndex;
             });
             let currentGroup = null;
             let displayIndex = 1;
@@ -398,6 +424,18 @@
                 displayIndex++;
             });
             table.style.display = evaluations.length > 0 ? 'table' : 'none';
+            // toggle sort controls visibility
+            const sortControls = document.getElementById('sortControls');
+            if (sortControls) {
+                sortControls.style.display = evaluations.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        // Apply selected sort criterion and re-render the table
+        function applySort() {
+            const select = document.getElementById('sortOption');
+            sortBy = select ? select.value : '';
+            renderTable();
         }
 
         function editEvaluation(index) {
