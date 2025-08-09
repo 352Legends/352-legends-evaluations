@@ -198,6 +198,20 @@
                 <option value="Coed Highschool">Coed Highschool</option>
             </select>
         </div>
+        <!-- 40 Yard Dash timer -->
+        <div class="form-group" id="dashGroup">
+            <label for="dashTime">40 Yard Dash (sec)</label>
+            <div style="display:flex; align-items:center; gap: 8px;">
+                <input type="text" id="dashTime" placeholder="--" readonly style="flex:1;">
+                <button type="button" class="btn btn-secondary" id="toggleDash" onclick="toggleDashTimer()">Start</button>
+            </div>
+        </div>
+        <!-- Player photo capture -->
+        <div class="form-group">
+            <label for="playerPhoto">Player Photo</label>
+            <input type="file" id="playerPhoto" accept="image/*" capture="environment">
+            <img id="photoPreview" style="display:none; max-width:80px; margin-top:5px; border-radius:4px;">
+        </div>
         <div class="ratings">
             <div class="form-group">
                 <label for="running">Running</label>
@@ -298,15 +312,6 @@
             <label for="comments">Comments</label>
             <textarea id="comments" rows="2"></textarea>
         </div>
-        <!-- 40 Yard Dash timer -->
-        <div class="form-group" id="dashGroup">
-            <label for="dashTime">40 Yard Dash (sec)</label>
-            <div style="display:flex; align-items:center; gap: 8px;">
-                <input type="text" id="dashTime" placeholder="--" readonly style="flex:1;">
-                <button type="button" class="btn btn-secondary" id="startDash" onclick="startDashTimer()">Start</button>
-                <button type="button" class="btn btn-secondary" id="stopDash" onclick="stopDashTimer()" disabled>Stop</button>
-            </div>
-        </div>
         <button type="button" class="btn btn-primary" onclick="addEvaluation()">Save Evaluation</button>
         <button type="button" class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('csvInput').click()">Import CSV</button>
@@ -328,7 +333,7 @@
     <table id="evaluationTable" style="display:none;">
         <thead>
             <tr>
-                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Dash (sec)</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
+                <th>#</th><th>Player Name</th><th>Number</th><th>Gender</th><th>Age Group</th><th>Running</th><th>Flag Pulling</th><th>Catching</th><th>Defense</th><th>Throwing</th><th>Attitude</th><th>Dash (sec)</th><th>Comments</th><th>Pos 1</th><th>Pos 2</th><th>Photo</th><th>Rating</th><th>All-Star</th><th>Edit</th><th>Delete</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -429,7 +434,8 @@
                 alert('Please enter the scout\'s name in the master field.');
                 return;
             }
-            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTime, comments, pos1, pos2, allStar, scoutName: masterScout };
+            const photo = playerPhotoData;
+            const newEval = { name, playerNumber, gender, ageGroup, running, flagPulling, catching, defense, throwing, attitude, dashTime, comments, pos1, pos2, allStar, photo, scoutName: masterScout };
             if (editingIndex !== null) {
                 history.push({ action: 'update', index: editingIndex, previous: { ...evaluations[editingIndex] } });
                 evaluations[editingIndex] = newEval;
@@ -483,7 +489,7 @@
                     const groupRow = document.createElement('tr');
                     const groupCell = document.createElement('td');
                     // Update colspan to reflect total number of columns (including All-Star)
-                    groupCell.colSpan = 19;
+                    groupCell.colSpan = 20;
                     groupCell.className = 'group-header';
                     groupCell.textContent = currentGroup ? `Age Group: ${currentGroup}` : 'Age Group: (unspecified)';
                     groupRow.appendChild(groupCell);
@@ -507,6 +513,7 @@
                     <td>${ev.comments || ''}</td>
                     <td>${ev.pos1 || ''}</td>
                     <td>${ev.pos2 || ''}</td>
+                    <td>${ev.photo ? '<img src="' + ev.photo + '" style="max-width:50px;border-radius:3px;">' : ''}</td>
                     <td>${starRating}</td>
                     <td>${ev.allStar ? '★' : ''}</td>
                     <td><button type="button" class="btn btn-secondary" onclick="editEvaluation(${origIndex})">Edit</button></td>
@@ -549,7 +556,16 @@
             // Set dash time value when editing
             document.getElementById('dashTime').value = e.dashTime || '';
             // Reset timer buttons when editing
-            stopDashTimer();
+            resetDashTimer();
+            // Load photo preview when editing
+            playerPhotoData = e.photo || null;
+            const preview = document.getElementById('photoPreview');
+            if (playerPhotoData) {
+                preview.src = playerPhotoData;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
             editingIndex = index;
             // Update gender field visibility when editing an existing player
             updateGenderVisibility();
@@ -584,27 +600,51 @@
         let dashTimerInterval = null;
         let dashStartTime = null;
 
-        // Start the 40-yard dash timer
-        function startDashTimer() {
-            dashStartTime = Date.now();
-            // update display every 50ms for smoothness
-            dashTimerInterval = setInterval(() => {
-                const elapsed = (Date.now() - dashStartTime) / 1000;
-                document.getElementById('dashTime').value = elapsed.toFixed(2);
-            }, 50);
-            document.getElementById('startDash').disabled = true;
-            document.getElementById('stopDash').disabled = false;
+        // Photo data URL for captured player photo
+        let playerPhotoData = null;
+
+        // Toggle the 40-yard dash timer. When starting, it begins updating the display and changes the
+        // button label to "Stop"; when stopping, it freezes the time and resets the label to "Start".
+        function toggleDashTimer() {
+            const btn = document.getElementById('toggleDash');
+            if (dashTimerInterval === null) {
+                dashStartTime = Date.now();
+                dashTimerInterval = setInterval(() => {
+                    const elapsed = (Date.now() - dashStartTime) / 1000;
+                    document.getElementById('dashTime').value = elapsed.toFixed(2);
+                }, 50);
+                btn.textContent = 'Stop';
+            } else {
+                clearInterval(dashTimerInterval);
+                dashTimerInterval = null;
+                btn.textContent = 'Start';
+            }
         }
 
-        // Stop the 40-yard dash timer
-        function stopDashTimer() {
+        // Reset the dash timer and button state without clearing the recorded time.
+        function resetDashTimer() {
             if (dashTimerInterval !== null) {
                 clearInterval(dashTimerInterval);
                 dashTimerInterval = null;
             }
-            document.getElementById('startDash').disabled = false;
-            document.getElementById('stopDash').disabled = true;
+            const btn = document.getElementById('toggleDash');
+            if (btn) btn.textContent = 'Start';
         }
+
+        // Handle player photo input change
+        document.getElementById('playerPhoto').addEventListener('change', function (event) {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    playerPhotoData = reader.result;
+                    const preview = document.getElementById('photoPreview');
+                    preview.src = playerPhotoData;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
         function combineEvaluations(oldEval, newEval) {
             const combined = { ...oldEval };
@@ -626,6 +666,7 @@
             }
             updateField('attitude');
             updateField('dashTime');
+            updateField('photo');
             updateField('pos1');
             updateField('pos2');
             updateField('scoutName');
@@ -652,9 +693,15 @@
             document.getElementById('ageGroup').value = masterAge;
             // update gender visibility after resetting age group
             updateGenderVisibility();
-            // reset dash time and timer buttons
+            // reset dash time and timer button
             document.getElementById('dashTime').value = '';
-            stopDashTimer();
+            resetDashTimer();
+            // reset photo input and preview
+            playerPhotoData = null;
+            const photoInput = document.getElementById('playerPhoto');
+            if (photoInput) photoInput.value = '';
+            const preview = document.getElementById('photoPreview');
+            if (preview) preview.style.display = 'none';
         }
 
         function computeNumericAverage(ev) {
@@ -687,7 +734,7 @@
                 alert('No evaluations to export.');
                 return;
             }
-            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Dash Time','Comments','Pos1','Pos2','Rating','All-Star','Scout Name'];
+            const header = ['No.','Player Name','Number','Gender','Age Group','Running','Flag Pulling','Catching','Defense','Throwing','Attitude','Dash Time','Comments','Pos1','Pos2','Photo','Rating','All-Star','Scout Name'];
             const sorted = evaluations.map((ev, idx) => ({ ev, idx })).sort((a, b) => {
                 const ai = ageOrder.indexOf(a.ev.ageGroup);
                 const bi = ageOrder.indexOf(b.ev.ageGroup);
@@ -711,6 +758,7 @@
                 item.ev.comments,
                 item.ev.pos1,
                 item.ev.pos2,
+                item.ev.photo || '',
                 computeStarRating(item.ev),
                 item.ev.allStar ? 'Yes' : 'No',
                 item.ev.scoutName
@@ -758,8 +806,8 @@
                 const values = parseCSVLine(line);
                 // remove surrounding quotes
                 const row = values.map(v => v.replace(/^"(.*)"$/, '$1'));
-                // Ensure there are enough columns (including dash time and scout name)
-                if (row.length < 18) continue;
+                // Ensure there are enough columns (including dash time, photo, and scout name)
+                if (row.length < 19) continue;
                 const evalObj = {
                     name: row[1] || '',
                     playerNumber: row[2] || '',
@@ -775,9 +823,10 @@
                     comments: row[12] || '',
                     pos1: row[13] || '',
                     pos2: row[14] || '',
-                    // rating column (15) is ignored; we recompute it dynamically
-                    allStar: (row[16] && (row[16].toLowerCase() === 'yes' || row[16].includes('★'))) ? true : false,
-                    scoutName: row[17] || ''
+                    photo: row[15] || '',
+                    // rating column (16) is ignored; we recompute it dynamically
+                    allStar: (row[17] && (row[17].toLowerCase() === 'yes' || row[17].includes('★'))) ? true : false,
+                    scoutName: row[18] || ''
                 };
                 if (evalObj.playerNumber) {
                     const existingIndex = evaluations.findIndex(ev => ev.playerNumber === evalObj.playerNumber);
